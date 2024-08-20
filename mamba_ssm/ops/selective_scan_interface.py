@@ -169,7 +169,7 @@ class MambaInnerFn(torch.autograd.Function):
     def forward(ctx, xz, conv1d_weight, conv1d_bias, x_proj_weight, delta_proj_weight,
                 out_proj_weight, out_proj_bias,
                 A, B=None, C=None, D=None, delta_bias=None, B_proj_bias=None,
-                C_proj_bias=None, delta_softplus=True, cu_seqlens=None, seq_idx=None, checkpoint_lvl=1):
+                C_proj_bias=None, delta_softplus=True, cu_seqlens=None, seq_idx=None, checkpoint_lvl=1, dropout=0.0):
         """
              xz: (batch, dim, seqlen)
         """
@@ -258,6 +258,8 @@ class MambaInnerFn(torch.autograd.Function):
         ctx.save_for_backward(xz, conv1d_weight, conv1d_bias, x_dbl, x_proj_weight,
                               delta_proj_weight, out_proj_weight, conv1d_out, delta,
                               A, B, C, D, delta_bias, scan_intermediates, out, cu_seqlens, seq_idx)
+
+        out_z = F.dropout(out_z, p=dropout)
         return F.linear(rearrange(out_z, "b d l -> b l d"), out_proj_weight, out_proj_bias)
 
     @staticmethod
@@ -349,7 +351,7 @@ class MambaInnerFn(torch.autograd.Function):
                 dout_proj_weight, dout_proj_bias,
                 dA, dB, dC, dD,
                 ddelta_bias if delta_bias is not None else None,
-                dB_proj_bias, dC_proj_bias, None, None, None)
+                dB_proj_bias, dC_proj_bias, None, None, None, None)
 
 
 def mamba_inner_fn(
@@ -357,10 +359,12 @@ def mamba_inner_fn(
     out_proj_weight, out_proj_bias,
     A, B=None, C=None, D=None, delta_bias=None, B_proj_bias=None,
     C_proj_bias=None, delta_softplus=True, cu_seqlens=None, seq_idx=None,
+    dropout=0.0,
 ):
     return MambaInnerFn.apply(xz, conv1d_weight, conv1d_bias, x_proj_weight, delta_proj_weight,
                               out_proj_weight, out_proj_bias,
-                              A, B, C, D, delta_bias, B_proj_bias, C_proj_bias, delta_softplus, cu_seqlens, seq_idx)
+                              A, B, C, D, delta_bias, B_proj_bias, C_proj_bias, delta_softplus, cu_seqlens, seq_idx,
+                              dropout)
 
 
 def mamba_inner_ref(

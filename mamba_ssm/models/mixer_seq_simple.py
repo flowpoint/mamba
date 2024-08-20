@@ -121,6 +121,7 @@ class MixerModel(nn.Module):
         d_model: int,
         n_layer: int,
         d_intermediate: int,
+        dropout: int,
         vocab_size: int,
         ssm_cfg=None,
         attn_layer_idx=None,
@@ -225,6 +226,7 @@ class MambaLMHeadModel(nn.Module, GenerationMixin):
         d_model = config.d_model
         n_layer = config.n_layer
         d_intermediate = config.d_intermediate
+        dropout = config.dropout
         vocab_size = config.vocab_size
         ssm_cfg = config.ssm_cfg
         attn_layer_idx = config.attn_layer_idx
@@ -242,6 +244,7 @@ class MambaLMHeadModel(nn.Module, GenerationMixin):
             d_model=d_model,
             n_layer=n_layer,
             d_intermediate=d_intermediate,
+            dropout=dropout,
             vocab_size=vocab_size,
             ssm_cfg=ssm_cfg,
             attn_layer_idx=attn_layer_idx,

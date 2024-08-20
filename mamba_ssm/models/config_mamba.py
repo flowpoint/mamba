@@ -7,6 +7,7 @@ class MambaConfig:
     d_model: int = 2560
     d_intermediate: int = 0
     n_layer: int = 64
+    dropout: float = 0
     vocab_size: int = 50277
     ssm_cfg: dict = field(default_factory=dict)
     attn_layer_idx: list = field(default_factory=list)

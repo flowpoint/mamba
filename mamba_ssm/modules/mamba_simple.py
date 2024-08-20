@@ -41,6 +41,7 @@ class Mamba(nn.Module):
         dt_init="random",
         dt_scale=1.0,
         dt_init_floor=1e-4,
+        dropout=0.0,
         conv_bias=True,
         bias=False,
         use_fast_path=True,  # Fused kernel options
@@ -73,6 +74,8 @@ class Mamba(nn.Module):
 
         self.activation = "silu"
         self.act = nn.SiLU()
+        self.dropout_rate = dropout
+        self.mult_dropout = nn.Dropout(self.dropout_rate)
 
         self.x_proj = nn.Linear(
             self.d_inner, self.dt_rank + self.d_state * 2, bias=False, **factory_kwargs
@@ -169,6 +172,7 @@ class Mamba(nn.Module):
                 delta_softplus=True,
                 cu_seqlens=cu_seqlens,
                 seq_idx=seq_idx,
+                dropout=self.dropout_rate,
             )
         else:
             x, z = xz.chunk(2, dim=1)
@@ -225,6 +229,7 @@ class Mamba(nn.Module):
                 y, last_state = y
                 ssm_state.copy_(last_state)
             y = rearrange(y, "b d l -> b l d")
+            y = self.mult_dropout(y)
             out = self.out_proj(y)
         return out
 
